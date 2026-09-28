@@ -1,0 +1,148 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-beginner-reader.ss" "lang")((modname 11.04-apply-transaction_starter.rkt-autorec.11) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+(define PNAME 'apply-transaction)
+
+#|
+CHEATSHEET: https://docs.racket-lang.org/htdp-langs/beginner.html
+TEMPLATES: https://howtocode.pages.dev/htdp_templates
+ASK FOR HELP: https://discord.com/invite/6Zq8sH5
+Turn all ❌ into ✅ for each step you complete
+== Data ==
+    1. Data Description✅
+        1B. if using define-struct, write all accessor signatures✅
+    2. Interpretation✅
+    3. Data Examples❌
+    4. A function template that processes this data❌
+== Functions ==
+    1. Signature, purpose, stub ❌
+    2. Examples (aka check-expect/tests, elaborate the concrete) ❌
+    3. Template(from data)?❌
+    4. Code body ❌
+    5. Test, review, and refactor(review all steps, ctrl+i to auto-format) ❌
+|#
+
+; ############################################################################
+
+#|PROBLEM A:
+Notice the Data Definitions for Account, Deposit, Withdraw, and Transfer are done.
+Finish the uncompleted steps ❌ of Data Design above for "Transaction"(examples and template)
+|#
+
+(define-struct account [name balance])
+; Account is (make-account String Number)
+; interp.
+; name is the owner of the bank account
+; balance is the current balance of a bank account
+
+; account-name : (Account -> String)
+; account-balance : (Account -> Number)
+
+; account-temp : (Account -> ???)
+(define (account-temp acc)
+  (...
+   (account-name acc)
+   (account-balance acc)))
+
+(define-struct deposit [amount])
+; Deposit is (make-deposit Number)
+; interp.
+; represents putting money into a bank account
+
+; deposit-amount : (Deposit -> Number)
+
+; deposit-temp : (Deposit -> ???)
+(define (deposit-temp dps)
+  (... (deposit-amount dps)))
+
+(define-struct withdraw [amount])
+; Withdraw is (make-withdraw Number)
+; interp.
+; represents taking money out of a bank account
+
+; withdraw-amount : (Withdraw -> Number)
+
+; withdraw-temp : (Withdraw -> ???)
+(define (withdraw-temp wth)
+  (... (withdraw-amount wth)))
+
+(define-struct transfer [from to amount])
+; Transfer is (make-transfer Account Account Number)
+; interp.
+; from is the Account we want to take money from
+; to is the Account we want to give money to
+; amount is the amount of money
+
+; transfer-from : (Transfer -> Account)
+; transfer-to : (Transfer -> Account)
+; transfer-amount : (Transfer -> Number)
+
+; transfer-temp : (Transfer -> ???)
+(define (transfer-temp tfr)
+  (... (account-temp (transfer-from tfr))
+       (account-temp (transfer-to tfr))
+       (transfer-amount tfr)))
+
+; union Transaction is one of:
+; - (make-deposit Number)
+; - (make-withdraw Number)
+; - (make-transfer Account Account Number)
+; interp. a set of bank account transactions
+
+(define joe-acc (make-account "joe" 75))
+(define li-acc (make-account "li" 100))
+(define dep (make-deposit 120))
+(define wd (make-withdraw 10))
+(define xfer (make-transfer joe-acc li-acc 75))
+
+(define (fn-for-transaction tx)
+  (cond
+    [(deposit? tx)
+     (... (deposit-amount tx))]
+    [(withdraw? tx)
+     (... (withdraw-amount tx))]
+    [(transfer? tx)
+     (... (fn-for-account (transfer-from tx))
+          (fn-for-account (transfer-to tx))
+          (transfer-amount tx))]))
+
+; TODO: 3. Examples and 4.Template
+
+#|PROBLEM B:
+Design a function "apply-transaction" that consumes an Account and a Transaction 
+and produces the balance(amount) of the given Account after the transaction has been applied.
+
+For example:
+| my-account | action                             | result|
+| $100       | (make-withdraw 10)                 | $90   |
+| $90        | (make-deposit 30)                  | $120  |
+| $50        | (make-transfer my-account joes 20) | $30   |
+| $10        | (make-transfer joes my-account 30) | $40   |
+|#
+
+; apply-transaction : (Account Transaction -> Account)
+; produce the given account updated with the transaction applied to it based on the table abo
+(check-expect (apply-transaction joe-acc xfer) (make-account "joe" 0))
+(check-expect (apply-transaction joe-acc dep) (make-account "joe" 195))
+(check-expect (apply-transaction joe-acc wd) (make-account "joe" 65))
+(check-expect (apply-transaction joe-acc (make-transfer joe-acc li-acc 30)) (make-account "joe" 45))
+
+;(define (apply-transaction joe-acc wd) (make "joe" 0)) ;stub
+
+(define (apply-transaction acc tx)
+   (cond
+     [(deposit? tx)
+      (make-account
+       (account-name acc)
+       (+ (deposit-amount tx) (account-balance acc)))]
+     [(withdraw? tx)
+      (make-account
+       (account-name acc)
+       (- (account-balance acc) (withdraw-amount tx)))]
+     [(transfer? tx)
+      (make-account
+       (account-name acc) 
+      (if (string=? (account-name acc) (account-name (transfer-from tx)))
+          (- (account-balance (transfer-from tx)) (transfer-amount tx))
+          (+ (account-balance (transfer-to tx)) (transfer-amount tx)))
+          )])) 
